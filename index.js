@@ -1,4 +1,4 @@
-const express = require('express');
+express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
@@ -66,6 +66,6 @@ app.use('/', createProxyMiddleware({
 }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('StudyPW Aura is Live and Smooth!'));
+app.listen(PORT, () => console.log('StudyPW Aura is Live and Smooth!'))
 
 
