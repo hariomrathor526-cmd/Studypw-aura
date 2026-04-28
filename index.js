@@ -1,7 +1,51 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const zlib = require('zlib'); // Compression handle karne ke liye
 const app = express();
+
+const finalInjection = `
+<style>
+    /* 1. LOGO REPLACE (Hariom Pro Logo) */
+    img[src*="logo"], img[alt*="Delta"], .logo-class, img[src*="delta"] { 
+        content: url('https://ibb.co') !important;
+        width: 130px !important; height: auto !important;
+    }
+    
+    /* 2. KEY & ADS REMOVAL (Jad se khatam) */
+    #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn, .verify-key-section, [id*="eruda"] { 
+        display: none !important; 
+    }
+
+    /* 3. BLUR & OVERLAY BYPASS (Content unlock) */
+    .blurred-content, .overlay, [style*="blur"] { 
+        filter: none !important; display: none !important; visibility: visible !important; pointer-events: auto !important; 
+    }
+    body { overflow: auto !important; }
+</style>
+
+<script>
+    function studyPWAuraFinalFix() {
+        // NAME REPLACE (Delta ko StudyPW Aura se badlo)
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while(node = walker.nextNode()) {
+            if (node.nodeValue.includes('Delta')) {
+                node.nodeValue = node.nodeValue.replace(/Delta/gi, 'StudyPW Aura');
+            }
+        }
+
+        // KEY BYPASS (Background verification)
+        localStorage.setItem('access_key', 'verified_permanent');
+        if(!document.cookie.includes('auth=true')) {
+            document.cookie = "auth=true; path=/; max-age=31536000";
+        }
+    }
+
+    // Site load aur scroll par branding apply hogi
+    window.addEventListener('load', studyPWAuraFinalFix);
+    window.addEventListener('scroll', studyPWAuraFinalFix);
+    setInterval(studyPWAuraFinalFix, 1500); // 1.5 sec check
+</script>
+`;
 
 app.use('/', createProxyMiddleware({
     target: 'https://deltastudy.site',
@@ -9,67 +53,19 @@ app.use('/', createProxyMiddleware({
     selfHandleResponse: true,
     onProxyRes: function (proxyRes, req, res) {
         let body = Buffer.from([]);
-        proxyRes.on('data', function (data) { body = Buffer.concat([body, data]); });
-        proxyRes.on('end', function () {
-            // Check karein ki data compressed (Gzip) toh nahi hai
-            let encoding = proxyRes.headers['content-encoding'];
-            let content;
-
-            try {
-                if (encoding === 'gzip') {
-                    content = zlib.gunzipSync(body).toString();
-                } else if (encoding === 'br') {
-                    content = zlib.brotliDecompressSync(body).toString();
-                } else {
-                    content = body.toString();
-                }
-
-                // Sirf HTML pages mein Logo, Name aur Key Bypass inject karein
-                if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
-                    const brandingAndKeyBypass = `
-                    <script>
-                        function studyPWAuraMagic() {
-                            // 1. KEY BYPASS (Har 1 second mein verify karega)
-                            localStorage.setItem('access_key', 'verified_permanent');
-                            document.cookie = "auth=true; path=/; max-age=31536000";
-
-                            // 2. NAME REPLACE (Delta ko StudyPW Aura se badlo)
-                            document.body.innerHTML = document.body.innerHTML.replace(/Delta/gi, 'StudyPW Aura');
-
-                            // 3. LOGO REPLACE
-                            document.querySelectorAll('img').forEach(img => {
-                                if(img.src.includes('logo') || img.alt.includes('Delta') || img.src.includes('delta')) {
-                                    img.src = 'https://ibb.co';
-                                }
-                            });
-                        }
-                        // Website khulte hi aur har thodi der mein fix chalayega
-                        window.addEventListener('load', studyPWAuraMagic);
-                        setInterval(studyPWAuraMagic, 2000);
-                    </script>
-                    <style>
-                        /* Ads aur Key Popups ko jad se khatam karo */
-                        #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn, .verify-key-section { display: none !important; }
-                        .blurred-content, .overlay { filter: none !important; display: none !important; visibility: visible !important; pointer-events: auto !important; }
-                        body { overflow: auto !important; }
-                    </style>`;
-                    
-                    content = content.replace('</head>', brandingAndKeyBypass + '</head>');
-                }
-
-                // Headers reset karein taaki download error na aaye
-                res.removeHeader('content-encoding');
-                res.removeHeader('content-security-policy');
-                res.setHeader('content-type', proxyRes.headers['content-type']);
-                res.send(content);
-
-            } catch (err) {
-                // Agar decompression fail ho jaye toh original data bhej do
-                res.end(body);
+        proxyRes.on('data', (data) => { body = Buffer.concat([body, data]); });
+        proxyRes.on('end', () => {
+            let content = body.toString();
+            // HTML content mein branding inject karein
+            if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
+                content = content.replace('</head>', finalInjection + '</head>');
             }
+            res.end(content);
         });
     }
 }));
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('StudyPW Aura is Live and Smooth!'));
+
 
