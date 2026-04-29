@@ -5,19 +5,18 @@ const app = express();
 
 const injection = `
 <style>
-    /* 1. Force Logo Change */
-    img[src*="logo"], img[alt*="Delta"], [class*="Logo"] img { 
+    /* Logo Replace (Hariom Pro) */
+    img[src*="logo"], img[alt*="Delta"], [class*="Logo"] img, .logo-img { 
         content: url('https://ibb.co') !important; 
         width: 130px !important; height: auto !important;
     }
-    /* 2. Hide Ads & Key Popups */
-    #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn, .verify-key-section { display: none !important; }
-    /* 3. Unlock Content */
+    /* Ads & Key Bypass CSS */
+    #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn { display: none !important; }
     .blurred-content, .overlay { filter: none !important; display: none !important; visibility: visible !important; pointer-events: auto !important; }
 </style>
 <script>
-    function applyStudyPWAura() {
-        // Safe Name Change (Bina jhatke ke)
+    function studyPWAuraFix() {
+        // 1. Name Change (Delta to StudyPW Aura)
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let node;
         while(node = walker.nextNode()) {
@@ -25,16 +24,24 @@ const injection = `
                 node.nodeValue = node.nodeValue.replace(/Delta/gi, 'StudyPW Aura');
             }
         }
-        // Telegram Link Replace
+        // 2. Telegram Link Force Replace (Aapka Link)
         document.querySelectorAll('a').forEach(a => {
-            if(a.href.includes('t.me')) a.href = 'https://t.me';
+            if(a.href.includes('t.me')) {
+                a.href = 'https://t.me';
+            }
         });
-        // Key Bypass
+        // 3. Authentication Bypass
         localStorage.setItem('access_key', 'verified_permanent');
-        if(!document.cookie.includes('auth=true')) document.cookie = "auth=true; path=/; max-age=31536000";
+        if(!document.cookie.includes('auth=true')) {
+            document.cookie = "auth=true; path=/; max-age=31536000";
+        }
     }
-    window.addEventListener('load', applyStudyPWAura);
-    setInterval(applyStudyPWAura, 1500); // Har 1.5 sec mein check karega
+
+    // Har activity par branding aur links check karega
+    const observer = new MutationObserver(studyPWAuraFix);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.addEventListener('load', studyPWAuraFix);
+    setInterval(studyPWAuraFix, 1000); // Extra safety
 </script>
 `;
 
@@ -54,7 +61,7 @@ app.use('/', createProxyMiddleware({
                 else content = body.toString();
 
                 if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
-                    content = content.replace('</head>', injection + '</head>');
+                    content = content.replace('<head>', '<head>' + injection);
                 }
                 res.removeHeader('content-encoding');
                 res.setHeader('content-type', proxyRes.headers['content-type'] || 'text/html');
@@ -65,4 +72,5 @@ app.use('/', createProxyMiddleware({
 }));
 
 app.listen(process.env.PORT || 3000);
+
 
