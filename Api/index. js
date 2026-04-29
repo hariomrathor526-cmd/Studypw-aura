@@ -1,0 +1,38 @@
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const app = express();
+
+const injection = `
+<style>
+    img[src*="logo"], img[alt*="Delta"], .logo-img { content: url('https://ibb.co') !important; width: 130px !important; }
+    #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn { display: none !important; }
+    .blurred-content, .overlay { filter: none !important; display: none !important; visibility: visible !important; pointer-events: auto !important; }
+</style>
+<script>
+    function studyPWFix() {
+        document.body.innerHTML = document.body.innerHTML.replace(/Delta/gi, 'StudyPW Aura');
+        document.querySelectorAll('a').forEach(a => { if(a.href.includes('t.me')) a.href = 'https://t.me'; });
+        localStorage.setItem('access_key', 'verified_permanent');
+    }
+    setInterval(studyPWFix, 2000);
+</script>`;
+
+app.use('/', createProxyMiddleware({
+    target: 'https://deltastudy.site',
+    changeOrigin: true,
+    selfHandleResponse: true,
+    onProxyRes: (proxyRes, req, res) => {
+        let body = Buffer.from([]);
+        proxyRes.on('data', (data) => { body = Buffer.concat([body, data]); });
+        proxyRes.on('end', () => {
+            let content = body.toString();
+            if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
+                content = content.replace('</head>', injection + '</head>');
+            }
+            res.setHeader('content-type', 'text/html');
+            res.send(content);
+        });
+    }
+}));
+
+module.exports = app;
