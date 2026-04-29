@@ -1,22 +1,22 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const zlib = require('zlib');
 const app = express();
 
 const injection = `
 <style>
-    /* Logo Replace (Hariom Pro) */
-    img[src*="logo"], img[alt*="Delta"], [class*="Logo"] img, .logo-img { 
+    /* 1. LOGO REPLACE (Forcefully) */
+    img[src*="logo"], img[alt*="Delta"], .logo-img, [class*="Logo"] img { 
         content: url('https://ibb.co') !important; 
-        width: 130px !important; height: auto !important;
+        width: 140px !important; height: auto !important;
     }
-    /* Ads & Key Bypass CSS */
+    /* 2. HIDE ADS & POPUPS */
     #ad728Wrapper, .ads-text, #pop_ad, [class*="key-popup"], .generate-key-btn { display: none !important; }
+    /* 3. UNLOCK CONTENT */
     .blurred-content, .overlay { filter: none !important; display: none !important; visibility: visible !important; pointer-events: auto !important; }
 </style>
 <script>
-    function studyPWAuraFix() {
-        // 1. Name Change (Delta to StudyPW Aura)
+    function studyPWAuraMasterFix() {
+        // NAME CHANGE (Deep Scanner)
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let node;
         while(node = walker.nextNode()) {
@@ -24,24 +24,17 @@ const injection = `
                 node.nodeValue = node.nodeValue.replace(/Delta/gi, 'StudyPW Aura');
             }
         }
-        // 2. Telegram Link Force Replace (Aapka Link)
+        // TELEGRAM LINK REPLACE
         document.querySelectorAll('a').forEach(a => {
-            if(a.href.includes('t.me')) {
-                a.href = 'https://t.me';
-            }
+            if(a.href.includes('t.me')) a.href = 'https://t.me';
         });
-        // 3. Authentication Bypass
+        // AUTH BYPASS
         localStorage.setItem('access_key', 'verified_permanent');
-        if(!document.cookie.includes('auth=true')) {
-            document.cookie = "auth=true; path=/; max-age=31536000";
-        }
+        document.cookie = "auth=true; path=/; max-age=31536000";
     }
-
-    // Har activity par branding aur links check karega
-    const observer = new MutationObserver(studyPWAuraFix);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-    window.addEventListener('load', studyPWAuraFix);
-    setInterval(studyPWAuraFix, 1000); // Extra safety
+    // Monitoring Next.js updates
+    setInterval(studyPWAuraMasterFix, 1000);
+    window.onload = studyPWAuraMasterFix;
 </script>
 `;
 
@@ -53,24 +46,18 @@ app.use('/', createProxyMiddleware({
         let body = Buffer.from([]);
         proxyRes.on('data', (data) => { body = Buffer.concat([body, data]); });
         proxyRes.on('end', () => {
-            let content;
-            const encoding = proxyRes.headers['content-encoding'];
-            try {
-                if (encoding === 'gzip') content = zlib.gunzipSync(body).toString();
-                else if (encoding === 'br') content = zlib.brotliDecompressSync(body).toString();
-                else content = body.toString();
-
-                if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
-                    content = content.replace('<head>', '<head>' + injection);
-                }
-                res.removeHeader('content-encoding');
-                res.setHeader('content-type', proxyRes.headers['content-type'] || 'text/html');
-                res.send(content);
-            } catch (e) { res.end(body); }
+            let content = body.toString();
+            // Sirf HTML mein injection daalna hai taaki JSON data na toote
+            if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/html')) {
+                content = content.replace('</head>', injection + '</head>');
+            }
+            res.setHeader('content-type', proxyRes.headers['content-type'] || 'text/html');
+            res.end(content);
         });
     }
 }));
 
 app.listen(process.env.PORT || 3000);
+
 
 
